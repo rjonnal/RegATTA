@@ -1,0 +1,13 @@
+# Compiled source #
+###################
+*.pyc
+__pycache__/
+
+# Logs and databases #
+######################
+log/
+*.py~
+
+# Obsolete files #
+##################
+obs/
