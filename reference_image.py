@@ -87,15 +87,19 @@ class ReferenceImage:
         # and just spit them out in the right order, in a dictionary
 
         shifts_tuple = np.unravel_index(np.argmax(xc_arr), xc_arr.shape)
-
-        d1 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
-        d2 = self._wrap_fix(shifts_tuple[2],xc_arr.shape[2])
+        
         if ftar.ndim==3 and self.fref.ndim==3:
             d0 = self._wrap_fix(shifts_tuple[0],xc_arr.shape[0])
+            d1 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
+            d2 = self._wrap_fix(shifts_tuple[2],xc_arr.shape[2])
         elif ftar.ndim==2 and self.fref.ndim==3:
             d0 = shifts_tuple[0]
+            d1 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
+            d2 = self._wrap_fix(shifts_tuple[2],xc_arr.shape[2])
         elif ftar.ndim==2 and self.fref.ndim==2:
             d0 = None
+            d1 = self._wrap_fix(shifts_tuple[0],xc_arr.shape[0])
+            d2 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
 
         xc_max = np.max(xc_arr)
 
