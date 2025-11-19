@@ -3,6 +3,10 @@
 Created on Thu Nov  6 12:49:04 2025
 
 @author: ZAQ
+
+This script is not meant to be run (yet). We wrote it before we started
+to design the inner workings of RegATTA, to guide our thinking about how
+the package and its classes and functions should be structured.
 """
 
 import RegATTA as rg
@@ -15,7 +19,8 @@ reference_folder = r'E:\Registration\data_Ravi\bscans_aooct\00000'
 target_folder = r'E:\Registration\data_Ravi\bscans_aooct\00001'
 
 # --- Load regatta classes ---
-refim = rg.ReferenceImage(reference_folder)
+reference_data = rg.load_data(reference_folder)
+refim = rg.ReferenceImage(reference_data)
 ris = rg.RegisteredImageSeries()
 
 # target data exist in numbered subfolders of mydata:

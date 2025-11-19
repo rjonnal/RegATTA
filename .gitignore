@@ -6,7 +6,12 @@ __pycache__/
 # Logs and databases #
 ######################
 log/
+
+# Backup files #
+################
 *.py~
+.gitignore~
+*.md~
 
 # Obsolete files #
 ##################
