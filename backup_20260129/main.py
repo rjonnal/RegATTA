@@ -9,7 +9,7 @@ to design the inner workings of RegATTA, to guide our thinking about how
 the package and its classes and functions should be structured.
 """
 
-import RegATTA as rg
+import regatta as rg
 import glob
 import numpy as np
 
@@ -19,13 +19,20 @@ reference_folder = r'E:\Registration\data_Ravi\bscans_aooct\00000'
 target_folder = r'E:\Registration\data_Ravi\bscans_aooct\00001'
 
 # --- Load regatta classes ---
-reference_data = rg.load_data(reference_folder)
-refim = rg.ReferenceImage(reference_data)
+
+# define a custom load_data function or use one of the predefined ones in regatta.io
+
+reference_image = rg.io.load_image_aooct(reference_folder)
+refim = rg.ReferenceImage(reference_image)
+
+
+
 ris = rg.RegisteredImageSeries()
 
 # target data exist in numbered subfolders of mydata:
 # target_folders = sorted(glob.glob('mydata/00*'))
 target_folders = sorted(glob.glob(r'E:\Registration\data_Ravi\bscans_aooct\00*'))
+
 
 for tf in target_folders: 
     ris.add(tf) # tf is a directory, might use preprocess.load_volumes to load images in ris.

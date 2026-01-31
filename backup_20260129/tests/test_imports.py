@@ -5,6 +5,6 @@ import regatta
 print(dir(regatta))
 print(dir(regatta.ReferenceImage))
 
-from regatta import ReferenceImage
+from regatta import Preprocess, ReferenceImage
 print(dir())
 

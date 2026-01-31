@@ -4,7 +4,6 @@ Created on Thu Nov  6 11:42:26 2025
 
 @author: ZAQ
 """
-from .preprocess import Preprocess
 import numpy as np
 import math
 from matplotlib import pyplot as plt
@@ -32,14 +31,13 @@ class ReferenceImage:
     def __str__(self):
         return 'ReferenceImage object holding data with shape %s and dtype %s.'%(self.image_data.shape,self.image_data.dtype)
      
-    @staticmethod
-    def _wrap_fix(p, size):
+    def wrap_fix(self, p, size):
         # identical wrap convention used in testing_broadcasting.py (fix on z,x; not y)
         return p if p < size // 2 else p - size
     
-    def register(self, target_image, poxc=True):
+    def register(self, target_image, poxc=False):
         """
-        The reference image has shape [slow, depth, fast], [depth, fast].
+        The reference image has shape [slow, depth, fast] or [depth, fast].
 
         This function registers a target image to the reference image.
 
@@ -76,8 +74,8 @@ class ReferenceImage:
         # # Peak & wrap the same way the script does (wrap z,x only)
         # yp, zp, xp = np.unravel_index(np.argmax(xc_arr), xc_arr.shape)
         # sy, sz, sx = xc_arr.shape
-        # zp = self._wrap_fix(zp, sz)
-        # xp = self._wrap_fix(xp, sx)
+        # zp = self.wrap_fix(zp, sz)
+        # xp = self.wrap_fix(xp, sx)
         
         # xc_max = float(np.max(xc_arr))
         # # return dict(dx=xp, dy=yp, dz=zp, xc=float(np.max(xc_arr)))
@@ -89,21 +87,21 @@ class ReferenceImage:
         shifts_tuple = np.unravel_index(np.argmax(xc_arr), xc_arr.shape)
         
         if ftar.ndim==3 and self.fref.ndim==3:
-            d0 = self._wrap_fix(shifts_tuple[0],xc_arr.shape[0])
-            d1 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
-            d2 = self._wrap_fix(shifts_tuple[2],xc_arr.shape[2])
+            d0 = self.wrap_fix(shifts_tuple[0],xc_arr.shape[0])
+            d1 = self.wrap_fix(shifts_tuple[1],xc_arr.shape[1])
+            d2 = self.wrap_fix(shifts_tuple[2],xc_arr.shape[2])
         elif ftar.ndim==2 and self.fref.ndim==3:
             d0 = shifts_tuple[0]
-            d1 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
-            d2 = self._wrap_fix(shifts_tuple[2],xc_arr.shape[2])
+            d1 = self.wrap_fix(shifts_tuple[1],xc_arr.shape[1])
+            d2 = self.wrap_fix(shifts_tuple[2],xc_arr.shape[2])
         elif ftar.ndim==2 and self.fref.ndim==2:
             d0 = None
-            d1 = self._wrap_fix(shifts_tuple[0],xc_arr.shape[0])
-            d2 = self._wrap_fix(shifts_tuple[1],xc_arr.shape[1])
+            d1 = self.wrap_fix(shifts_tuple[0],xc_arr.shape[0])
+            d2 = self.wrap_fix(shifts_tuple[1],xc_arr.shape[1])
 
         xc_max = np.max(xc_arr)
 
-        result = {'d0':d0,'d1':d1,'d2':d2,'xc_max':xc_max}
+        result = {'d0':d0,'d1':d1,'d2':d2,'xc_max':xc_max,'xc_arr':xc_arr}
         return result
             
             

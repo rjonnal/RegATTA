@@ -9,10 +9,9 @@ from regatta.io import load_image_aooct as load_image
 from regatta.reference_image import ReferenceImage
 import numpy as np
 
-location = '/home/rjonnal/Dropbox/Data/volume_registration/bscans_aooct/00000'
+location = '/home/rjonnal/projects/volume_registration/bscans_aooct/00000'
 
 reference_data = load_image(location)
 
 ref = ReferenceImage(reference_data)
-print(ref)
 
