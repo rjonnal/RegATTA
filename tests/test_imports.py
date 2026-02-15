@@ -3,8 +3,8 @@ print(dir())
 
 import regatta
 print(dir(regatta))
-print(dir(regatta.ReferenceImage))
+print(dir(regatta.ReferenceVolume))
 
-from regatta import ReferenceImage
+from regatta import ReferenceVolume
 print(dir())
 

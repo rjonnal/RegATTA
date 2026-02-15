@@ -20,7 +20,7 @@ Pre-written load functions are included in regatta.io for AO-OCT and clinical OR
 """
 
 
-location = '/home/rjonnal/projects/volume_registration/bscans_aooct/00000'
+location = '/home/rjonnal/Dropbox/Data/volume_registration/bscans_aooct_1deg_corrected/00000'
 
 # Test 1:
 
