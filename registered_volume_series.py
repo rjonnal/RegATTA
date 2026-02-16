@@ -120,9 +120,9 @@ class RegisteredVolumeSeries:
             #    equivalent to "next".
 
             corr_arr = np.array(corr_arr)
-            y_shift_arr = np.array(y_shift_arr)
-            z_shift_arr = np.array(z_shift_arr)
-            x_shift_arr = np.array(x_shift_arr)
+            y_shift_arr = np.array(y_shift_arr,dtype=float)
+            z_shift_arr = np.array(z_shift_arr,dtype=float)
+            x_shift_arr = np.array(x_shift_arr,dtype=float)
             rad_arr = np.sqrt(y_shift_arr**2+z_shift_arr**2+x_shift_arr**2)
 
 
@@ -138,7 +138,7 @@ class RegisteredVolumeSeries:
             nrad_thresh_std = 1.0
             valid = (ncorr_arr>ncorr_thresh_std)*(nrad_arr<nrad_thresh_std)
             invalid = 1-valid
-
+            
             corr_arr[np.where(invalid)] = np.nan
             y_shift_arr[np.where(invalid)] = np.nan
             z_shift_arr[np.where(invalid)] = np.nan
