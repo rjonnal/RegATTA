@@ -87,7 +87,7 @@ class RegisteredVolumeSeries:
         self.corrs.append(xc)
 
 
-    def register_volumes(self,target_volumes_list):
+    def register_volumes(self,target_volumes_list,show_plots=False):
 
         for vidx,target_volume in enumerate(target_volumes_list):
             corr_arr = []
@@ -144,16 +144,17 @@ class RegisteredVolumeSeries:
             z_shift_arr[np.where(invalid)] = np.nan
             x_shift_arr[np.where(invalid)] = np.nan
 
-            plt.cla()
-            plt.plot(ncorr_arr,label='normalized correlation')
-            plt.plot(nrad_arr,label='normalized 3D displacement')
-            for k in range(len(invalid)):
-                if invalid[k]:
-                    plt.axvline(k,color='r',alpha=0.2)
-            plt.legend()
-            os.makedirs('figures',exist_ok=True)
-            plt.savefig(os.path.join('figures','regdata_%03d.png'%vidx))
-            plt.pause(.1)
+            if show_plots:
+                plt.cla()
+                plt.plot(ncorr_arr,label='normalized correlation')
+                plt.plot(nrad_arr,label='normalized 3D displacement')
+                for k in range(len(invalid)):
+                    if invalid[k]:
+                        plt.axvline(k,color='r',alpha=0.2)
+                plt.legend()
+                os.makedirs('figures',exist_ok=True)
+                plt.savefig(os.path.join('figures','regdata_%03d.png'%vidx))
+                plt.pause(.1)
             self.add(target_volume,x_shift_arr,y_shift_arr,z_shift_arr,corr_arr)
 
         self.correct_volumes()

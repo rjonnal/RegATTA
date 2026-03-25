@@ -100,7 +100,12 @@ def nxc3(a,b):
     out = np.abs(np.fft.ifftn(prod))
     return out
 
-def flythrough3(a,fps=5):
+def flythrough3(temp,fps=5,dB=True):
+    if dB:
+        a = 20*np.log10(temp)
+    else:
+        a = temp
+        
     amean = np.nanmean(a)
     for k in range(len(a.shape)):
         for d in range(a.shape[0]):
