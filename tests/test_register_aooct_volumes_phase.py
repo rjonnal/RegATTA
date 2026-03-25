@@ -26,6 +26,9 @@ reference_data = ref
 rvs = registered_volume_series.RegisteredVolumeSeries(ref)
 rvs.register_volumes(vols)
 
+# perform phase alignment:
+rvs.phase_align_volumes()
+
 # visualize the result somehow:
 
 #rfunc.project3(rvs.average_volume,pfunc=np.nanmax)

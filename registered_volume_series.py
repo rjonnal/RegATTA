@@ -169,6 +169,7 @@ class RegisteredVolumeSeries:
         #    and add this to the original volume dimensions
 
         sy, sz, sx = self.volumes[0].shape
+        # refactor: implement paging for large volume series that can't be held in RAM
         self.corrected_volumes = []
         
         xshifts_vec = np.array(self.xshifts)
@@ -193,5 +194,36 @@ class RegisteredVolumeSeries:
                     continue
                 corrected_volume[idx+int(y),int(z):int(z+sz),int(x):int(x+sx)] = bscan
                 
+            # refactor: implement paging for large volume series that can't be held in RAM
             self.corrected_volumes.append(corrected_volume)
 
+    def phase_align_volumes(self,show_plots=True):
+        try:
+            n_vol = len(self.corrected_volumes)
+        except NameError as ne:
+            print('This RegisteredVolumeSeries does not have an attribute .corrected_volumes. Make sure correct_volumes has been run.')
+            
+        sy, sz, sx = self.corrected_volumes[0].shape
+
+        for y in range(sy):
+            for x in range(sx):
+                ascans = []
+                for v in range(n_vol):
+                    # refactor: implement paging for large volume series that can't be held in RAM
+                    cv = self.corrected_volumes[v]
+                    ascans.append(cv[y,:,x])
+                ascans = np.array(ascans,dtype=complex)
+                ascans_amplitude = np.abs(ascans)
+                
+                ascans_phase = np.angle(ascans)
+                ascans_phase_unwrapped = np.unwrap(ascans_phase,axis=1)
+                differential_phase = np.unwrap(np.diff(ascans_phase,axis=1),axis=1)
+                
+                if np.nanmean(ascans)>0:
+                    if show_plots:
+                        plt.figure()
+                        plt.subplot(2,1,1)
+                        plt.imshow(ascans_amplitude,aspect='auto',interpolation='none')
+                        plt.subplot(2,1,2)
+                        plt.imshow(differential_phase,aspect='auto',interpolation='none')
+                        plt.show()
