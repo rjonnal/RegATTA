@@ -103,6 +103,7 @@ class RegisteredVolumeSeries:
                 y_shift_arr.append(res['dy']-s)
                 z_shift_arr.append(res['dz'])
 
+
             # filter shifts using xc here, later
 
             # ideas for filtering the shift vectors
@@ -188,7 +189,7 @@ class RegisteredVolumeSeries:
         csx = int(sx + np.nanmax(xshifts_vec))
 
         for v,ysv,zsv,xsv,cv in zip(self.volumes,yshifts_vec,zshifts_vec,xshifts_vec,corrs_vec):
-            corrected_volume = np.zeros((csy,csz,csx),dtype=complex)
+            corrected_volume = np.ones((csy,csz,csx),dtype=complex)*np.nan
             for idx,(bscan,y,z,x,c) in enumerate(zip(v,ysv,zsv,xsv,cv)):
                 if np.isnan(c):
                     continue
