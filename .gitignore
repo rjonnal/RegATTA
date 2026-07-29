@@ -16,3 +16,7 @@ log/
 # Obsolete files #
 ##################
 obs/
+
+# Large files #
+###############
+*.npy
