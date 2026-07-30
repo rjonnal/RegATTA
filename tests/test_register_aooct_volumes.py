@@ -13,12 +13,12 @@ import imageio
 root = '/home/rjonnal/Dropbox/Data/volume_registration/bscans_aooct'
 # root = 'C:/bscans_aooct'
 
-volume_filenames = sorted(glob.glob(os.path.join(root,'*')))
+volume_filenames = sorted(glob.glob(os.path.join(root,'*')))[7:13]
 
 vols = [rfunc.get_volume(fn,prefix='') for fn in volume_filenames]
 
 # use a volume from the middle of the series as a reference:
-refidx = 0#len(vols)//4
+refidx = len(vols)//2
 
 # get the reference volume
 ref = vols[refidx]

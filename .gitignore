@@ -19,4 +19,4 @@ obs/
 
 # Large files #
 ###############
-*.npy
+average*.npy

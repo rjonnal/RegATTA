@@ -215,16 +215,51 @@ class RegisteredVolumeSeries:
                     ascans.append(cv[y,:,x])
                 ascans = np.array(ascans,dtype=complex)
                 ascans_amplitude = np.abs(ascans)
-                
-                ascans_phase = np.angle(ascans)
-                ascans_phase_unwrapped = np.unwrap(ascans_phase,axis=1)
-                differential_phase = np.unwrap(np.diff(ascans_phase,axis=1),axis=1)
-                
-                if np.nanmean(ascans)>0:
-                    if show_plots:
-                        plt.figure()
-                        plt.subplot(2,1,1)
-                        plt.imshow(ascans_amplitude,aspect='auto',interpolation='none')
-                        plt.subplot(2,1,2)
-                        plt.imshow(differential_phase,aspect='auto',interpolation='none')
-                        plt.show()
+
+                ascan_means = np.nanmean(ascans,axis=1)
+                valid = np.where(1-np.isnan(ascan_means))[0]
+                if len(valid)<2:
+                    continue
+                ref = ascans[valid[0],:]
+                for tar_idx in valid[1:]:
+                    tar = ascans[tar_idx,:]
+                    self.phase_correct(ref,tar)
+
+
+    def phase_correct(self,ref,tar,threshold_percentile=0.8):
+        avg = (np.abs(ref)+np.abs(tar))/2.0
+        nonnan_indices = np.where(1-np.isnan(avg))[0]
+        avg = avg[nonnan_indices]
+        ref = ref[nonnan_indices]
+        tar = tar[nonnan_indices]
+        valid_indices = np.where(avg>=np.percentile(avg,threshold_percentile))
+        ref = ref[valid_indices]
+        tar = tar[valid_indices]
+        bin_lefts = np.arange(0,2*np.pi,np.pi/4.0)
+        bin_rights = bin_lefts + np.pi/4.0
+
+        bin_edges = np.array(list(bin_lefts)+[bin_rights[-1]])
+        
+        bin_width = bin_lefts[1]-bin_lefts[0]
+
+        n_shifts = 8
+        shifts = np.arange(0,bin_width,bin_width/n_shifts)
+
+        dphase = np.angle(ref)-np.angle(tar)
+        plt.figure()
+        plt.hist(dphase,bins=bin_edges)
+
+        hists = []
+        
+        for shift in shifts:
+            dphase = np.angle(ref)-np.angle(tar)-shift
+            hists.append(np.histogram(dphase,bins=bin_edges))
+
+        hists = np.mean(hists,axis=0)
+        plt.figure()
+        plt.bar(hists)
+            
+            
+            
+        plt.show()
+        
