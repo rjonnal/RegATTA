@@ -198,7 +198,7 @@ class RegisteredVolumeSeries:
             # refactor: implement paging for large volume series that can't be held in RAM
             self.corrected_volumes.append(corrected_volume)
 
-    def phase_align_volumes(self,show_plots=True):
+    def phase_align_volumes(self,show_plots=False):
         try:
             n_vol = len(self.corrected_volumes)
         except NameError as ne:
@@ -214,52 +214,162 @@ class RegisteredVolumeSeries:
                     cv = self.corrected_volumes[v]
                     ascans.append(cv[y,:,x])
                 ascans = np.array(ascans,dtype=complex)
-                ascans_amplitude = np.abs(ascans)
 
-                ascan_means = np.nanmean(ascans,axis=1)
+                if all(np.isnan(ascans.ravel())):
+                    continue
+                
+                ascans_amplitude = np.abs(ascans)
+                ascan_means = np.nanmean(ascans_amplitude,axis=1)
                 valid = np.where(1-np.isnan(ascan_means))[0]
                 if len(valid)<2:
                     continue
                 ref = ascans[valid[0],:]
-                for tar_idx in valid[1:]:
+                corrected_ascans = np.ones(ascans.shape,dtype=complex)*np.nan
+                
+                for tar_idx in valid:
                     tar = ascans[tar_idx,:]
-                    self.phase_correct(ref,tar)
+                    phase_shift = self.get_phase_shift(ref,tar)
+                    tar = tar * np.exp(-1j*phase_shift)
+                    self.corrected_volumes[tar_idx][y,:,x] = tar
+                    corrected_ascans[tar_idx,:] = tar
 
+                if show_plots:
+                    plt.figure()
+                    plt.subplot(4,1,1)
+                    plt.imshow(np.abs(ascans),aspect='auto')
+                    plt.subplot(4,1,2)
+                    plt.imshow(np.angle(ascans),aspect='auto')
+                    plt.subplot(4,1,3)
+                    plt.imshow(np.abs(corrected_ascans),aspect='auto')
+                    plt.subplot(4,1,4)
+                    plt.imshow(np.angle(corrected_ascans),aspect='auto')
+                    plt.show()
+                
 
-    def phase_correct(self,ref,tar,threshold_percentile=0.8):
+    def get_phase_shift(self,ref,tar,threshold_percentile=80,show_plots=True):
+        # simple, non-histogram method for estimating phase shift using
+        # the angle of the mean thresholded complex difference between scans
         avg = (np.abs(ref)+np.abs(tar))/2.0
         nonnan_indices = np.where(1-np.isnan(avg))[0]
         avg = avg[nonnan_indices]
         ref = ref[nonnan_indices]
         tar = tar[nonnan_indices]
+        
+        valid_indices = np.where(avg>=np.percentile(avg,threshold_percentile))
+        ref = ref[valid_indices]
+        tar = tar[valid_indices]
+
+        phase_shift = np.angle(np.mean(tar*np.conj(ref)))
+        return phase_shift
+        
+                
+    def get_phase_shift0(self,ref,tar,threshold_percentile=80,show_plot=True):
+        # attempt to use circular, resampled histograms to estimate
+        # bulk phase shift; seems to work but generates odd results when
+        # an A-scan is corrected to itself; needs debugging
+        avg = (np.abs(ref)+np.abs(tar))/2.0
+        nonnan_indices = np.where(1-np.isnan(avg))[0]
+        avg = avg[nonnan_indices]
+        ref = ref[nonnan_indices]
+        tar = tar[nonnan_indices]
+        
         valid_indices = np.where(avg>=np.percentile(avg,threshold_percentile))
         ref = ref[valid_indices]
         tar = tar[valid_indices]
         bin_lefts = np.arange(0,2*np.pi,np.pi/4.0)
+        n_bins = len(bin_lefts)
+        
         bin_rights = bin_lefts + np.pi/4.0
-
         bin_edges = np.array(list(bin_lefts)+[bin_rights[-1]])
+        bin_centers = (bin_lefts+bin_rights)/2.0
         
         bin_width = bin_lefts[1]-bin_lefts[0]
 
         n_shifts = 8
+
+        n_resample = n_bins*n_shifts
+        resampled_width = 2*np.pi/n_resample
+        
         shifts = np.arange(0,bin_width,bin_width/n_shifts)
 
         dphase = np.angle(ref)-np.angle(tar)
-        plt.figure()
-        plt.hist(dphase,bins=bin_edges)
-
+        if show_plot:
+            plt.figure()
+            plt.subplot(2,1,1)
+            plt.hist(dphase,bins=bin_edges,alpha=0.5,color='tab:blue')
+        
         hists = []
-        
+        bin_centers = []
         for shift in shifts:
-            dphase = np.angle(ref)-np.angle(tar)-shift
-            hists.append(np.histogram(dphase,bins=bin_edges))
+            dphase = (np.angle(ref)-np.angle(tar)-shift)%(2*np.pi)
+            hist = np.histogram(dphase,bins=bin_edges)
+            hists.append(hist[0])
+            bl = hist[1][:-1]
+            br = hist[1][1:]
+            bc = (bl+br)/2.0+shift
+            bin_centers.append(bc)
 
-        hists = np.mean(hists,axis=0)
-        plt.figure()
-        plt.bar(hists)
-            
-            
-            
-        plt.show()
+        hists = np.array(hists).T.ravel()
+        bin_centers = np.array(bin_centers).T.ravel()
+
+        if show_plot:
+            plt.subplot(2,1,2)
+            plt.bar(bin_centers.T.ravel(),hists.T.ravel(),alpha=0.5,color='tab:green',width=resampled_width*0.8)
+            plt.show()
+
+        return bin_centers[np.argmax(hists)]
+
+
+    def compute_correlation(self,v1,v2):
+        temp = v1+v2
+        non_nan = np.where(1-np.isnan(temp))
+        v1valid = v1[non_nan].ravel()
+        v2valid = v2[non_nan].ravel()
+        corrcoef = np.corrcoef(np.abs(v1valid),np.abs(v2valid))[0,1]
+        return corrcoef
+
+    def compute_entropy0(self,volume,n_bins=128):
+        non_nan = np.where(1-np.isnan(volume))
+        valid = np.abs(volume[non_nan].ravel())
+        h,bins = np.histogram(valid,bins=n_bins)
+        h = h/len(valid)
+        h = h[np.where(np.logical_and(1-np.isnan(h),h>0))]
+        entropy = -np.sum(h*np.log2(h))
+        return entropy
+
+    def compute_entropy(self,volume,n_bins=128,bright_layer=False):
+        if bright_layer:
+            prof = np.nanmean(np.abs(volume),axis=(0,2))
+            lidx = np.argmax(prof)
+            volume = volume[:,lidx,:]
+        non_nan = np.where(1-np.isnan(volume))
+        valid = np.abs(volume[non_nan].ravel())
+        h,bins = np.histogram(valid,bins=n_bins)
+        h = h/len(valid)
+        h = h[np.where(np.logical_and(1-np.isnan(h),h>0))]
+        entropy = -np.sum(h*np.log2(h))
+        return entropy
+
+    def compute_sharpness(self,volume,bright_layer=False):
+        if bright_layer:
+            prof = np.nanmean(np.abs(volume),axis=(0,2))
+            lidx = np.argmax(prof)
+            volume = volume[:,lidx,:]
+        non_nan = np.where(1-np.isnan(volume))
+        valid = np.abs(volume[non_nan].ravel())
+        return np.sum(valid**2)/(np.sum(valid)**2)
+
+    def compute_contrast(self,volume,bright_layer=False):
+        if bright_layer:
+            prof = np.nanmean(np.abs(volume),axis=(0,2))
+            lidx = np.argmax(prof)
+            volume = volume[:,lidx,:]
+        non_nan = np.where(1-np.isnan(volume))
+        valid = np.abs(volume[non_nan].ravel())
+        M = np.max(valid)
+        m = np.min(valid)
+        return (M-m)/(M+m)
         
+
+
+    
