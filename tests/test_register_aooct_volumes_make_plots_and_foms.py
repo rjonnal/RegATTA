@@ -36,9 +36,9 @@ print('reference volume entropy: ',rvs.compute_entropy(vols[refidx]))
 print('unregistered average entropy: ',rvs.compute_entropy(np.mean(np.array(vols),axis=0)))
 print('registered average entropy: ',rvs.compute_entropy(rvs.average_volume))
 
-print('reference volume layer entropy: ',rvs.compute_entropy(vols[refidx],True))
-print('unregistered average layer entropy: ',rvs.compute_entropy(np.mean(np.array(vols),axis=0),True))
-print('registered average layer entropy: ',rvs.compute_entropy(rvs.average_volume,True))
+print('reference volume layer entropy: ',rvs.compute_entropy(vols[refidx],bright_layer=True))
+print('unregistered average layer entropy: ',rvs.compute_entropy(np.mean(np.array(vols),axis=0),bright_layer=True))
+print('registered average layer entropy: ',rvs.compute_entropy(rvs.average_volume,bright_layer=True))
 
 print('reference volume sharpness: ',rvs.compute_sharpness(vols[refidx]))
 print('unregistered average sharpness: ',rvs.compute_sharpness(np.mean(np.array(vols),axis=0)))
@@ -73,19 +73,19 @@ plt.ylabel('Pearson correlation with volume %d (OCT magnitude only)'%refidx)
 plt.legend()
 plt.xticks(range(0,20,5))
 plt.savefig('volume_correlation.png',dpi=300)
-plt.show()
-sys.exit()
+
+np.save(os.path.join(output_folder,'average_volume.npy'),rvs.average_volume)
 
 # phase-align the volumes
 rvs.phase_align_volumes()
+
+np.save(os.path.join(output_folder,'average_volume_phase_corrected.npy'),rvs.average_volume)
 
 # visualize the result somehow:
 
 #rfunc.project3(rvs.average_volume,pfunc=np.nanmax)
 rfunc.project3multiple((np.abs(reference_data),rvs.average_volume),pfunc=rfunc.brightest,clim=(60,100))
 #rfunc.flythrough3(rvs.average_volume)
-
-np.save(os.path.join(output_folder,'average_volume.npy'),rvs.average_volume)
 
 # save the registered, averaged frames as PNG files
 temp = np.zeros(rvs.average_volume.shape)
@@ -110,3 +110,4 @@ for idx,vol in enumerate(rvs.corrected_volumes):
     np.save(volume_filename,vol)
     print('Saving registered volume %s.'%volume_filename)
         
+plt.show()

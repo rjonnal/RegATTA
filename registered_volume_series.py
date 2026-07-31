@@ -208,6 +208,7 @@ class RegisteredVolumeSeries:
 
         for y in range(sy):
             for x in range(sx):
+                print('Phase correction %0.1f percent done.'%(100*(y*sx+x)/(sy*sx)))
                 ascans = []
                 for v in range(n_vol):
                     # refactor: implement paging for large volume series that can't be held in RAM
@@ -342,6 +343,8 @@ class RegisteredVolumeSeries:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
+            plt.imshow(np.abs(volume))
+            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         h,bins = np.histogram(valid,bins=n_bins)
@@ -355,6 +358,8 @@ class RegisteredVolumeSeries:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
+            plt.imshow(np.abs(volume))
+            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         return np.sum(valid**2)/(np.sum(valid)**2)
@@ -364,6 +369,8 @@ class RegisteredVolumeSeries:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
+            plt.imshow(np.abs(volume))
+            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         M = np.max(valid)
