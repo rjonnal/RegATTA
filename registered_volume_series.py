@@ -69,7 +69,7 @@ class RegisteredVolumeSeries:
         self.corrs = []
         self.reference_data = reference_data
         self.ref = ReferenceVolume(reference_data)
-        self.add(reference_data)
+        #self.add(reference_data)
         
     def add(self,volume,x=None,y=None,z=None,xc=None):
 
@@ -87,7 +87,7 @@ class RegisteredVolumeSeries:
         self.corrs.append(xc)
 
 
-    def register_volumes(self,target_volumes_list,show_plots=False):
+    def register_volumes(self,target_volumes_list,show_plots=False,error_rms=0):
 
         for vidx,target_volume in enumerate(target_volumes_list):
             corr_arr = []
@@ -95,9 +95,14 @@ class RegisteredVolumeSeries:
             z_shift_arr = []
             x_shift_arr = []
             for s in range(self.ref.n_slow):
-                print(vidx,s)
                 tar = target_volume[s,:,:]
                 res = self.ref.register(tar)
+
+                if error_rms:
+                    res['dx'] = res['dx'] + int(np.round(np.random.randn()*error_rms))
+                    res['dy'] = res['dy'] + int(np.round(np.random.randn()*error_rms))
+                    res['dz'] = res['dz'] + int(np.round(np.random.randn()*error_rms))
+                
                 corr_arr.append(res['xc'])
                 x_shift_arr.append(res['dx'])
                 y_shift_arr.append(res['dy']-s)
@@ -198,6 +203,7 @@ class RegisteredVolumeSeries:
             # refactor: implement paging for large volume series that can't be held in RAM
             self.corrected_volumes.append(corrected_volume)
 
+
     def phase_align_volumes(self,show_plots=False):
         try:
             n_vol = len(self.corrected_volumes)
@@ -207,8 +213,8 @@ class RegisteredVolumeSeries:
         sy, sz, sx = self.corrected_volumes[0].shape
 
         for y in range(sy):
+            print('Phase correction %0.1f percent done.'%(100*y/sy))
             for x in range(sx):
-                print('Phase correction %0.1f percent done.'%(100*(y*sx+x)/(sy*sx)))
                 ascans = []
                 for v in range(n_vol):
                     # refactor: implement paging for large volume series that can't be held in RAM
@@ -320,7 +326,6 @@ class RegisteredVolumeSeries:
 
         return bin_centers[np.argmax(hists)]
 
-
     def compute_correlation(self,v1,v2):
         temp = v1+v2
         non_nan = np.where(1-np.isnan(temp))
@@ -329,22 +334,11 @@ class RegisteredVolumeSeries:
         corrcoef = np.corrcoef(np.abs(v1valid),np.abs(v2valid))[0,1]
         return corrcoef
 
-    def compute_entropy0(self,volume,n_bins=128):
-        non_nan = np.where(1-np.isnan(volume))
-        valid = np.abs(volume[non_nan].ravel())
-        h,bins = np.histogram(valid,bins=n_bins)
-        h = h/len(valid)
-        h = h[np.where(np.logical_and(1-np.isnan(h),h>0))]
-        entropy = -np.sum(h*np.log2(h))
-        return entropy
-
     def compute_entropy(self,volume,n_bins=128,bright_layer=False):
         if bright_layer:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
-            plt.imshow(np.abs(volume))
-            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         h,bins = np.histogram(valid,bins=n_bins)
@@ -358,8 +352,6 @@ class RegisteredVolumeSeries:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
-            plt.imshow(np.abs(volume))
-            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         return np.sum(valid**2)/(np.sum(valid)**2)
@@ -369,8 +361,6 @@ class RegisteredVolumeSeries:
             prof = np.nanmean(np.abs(volume),axis=(0,2))
             lidx = np.argmax(prof)
             volume = volume[:,lidx,:]
-            plt.imshow(np.abs(volume))
-            plt.show()
         non_nan = np.where(1-np.isnan(volume))
         valid = np.abs(volume[non_nan].ravel())
         M = np.max(valid)
